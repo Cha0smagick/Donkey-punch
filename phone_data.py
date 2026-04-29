@@ -159,3 +159,164 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
     "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1"
 ]
+
+# Base de datos de proveedores VoIP
+VOIP_PROVIDERS = {
+    "Google Voice": {
+        "type": "VoIP",
+        "website": "voice.google.com",
+        "number_patterns": [r"^1[0-9]{9}$"],  # US patterns
+        "notes": "Números gratuitos de Google, muy usados para verificaciones"
+    },
+    "Skype": {
+        "type": "VoIP",
+        "website": "skype.com",
+        "number_patterns": [r"^44[0-9]{10}$", r"^1[0-9]{9}$"],
+        "notes": "Números de Skype para llamadas externas"
+    },
+    "Twilio": {
+        "type": "CPaaS/VoIP",
+        "website": "twilio.com",
+        "number_patterns": [r"^1[0-9]{9}$", r"^44[0-9]{10}$", r"^\+[0-9]{10,15}$"],
+        "notes": "Plataforma de comunicaciones en la nube, usada por bots y servicios"
+    },
+    "Vonage": {
+        "type": "VoIP",
+        "website": "vonage.com",
+        "number_patterns": [r"^1[0-9]{9}$"],
+        "notes": "Proveedor VoIP empresarial"
+    },
+    "WhatsApp Business": {
+        "type": "OTT",
+        "website": "business.whatsapp.com",
+        "number_patterns": [r"^\+[0-9]{10,15}$"],
+        "notes": "Números verificados de WhatsApp Business API"
+    },
+    "Telegram": {
+        "type": "OTT",
+        "website": "telegram.org",
+        "number_patterns": [r"^\+[0-9]{10,15}$"],
+        "notes": "Números vinculados a cuentas de Telegram"
+    }
+}
+
+# Fuentes de bases de datos de filtraciones
+BREACH_SOURCES = {
+    "HaveIBeenPwned": {
+        "url_template": "https://haveibeenpwned.com/account/{clean_num}",
+        "notes": "Base de datos líder en filtraciones"
+    },
+    "BreachDirectory": {
+        "url_template": "https://breachdirectory.org/search?q={clean_num}",
+        "notes": "Motor de búsqueda de filtraciones"
+    },
+    "LeakCheck": {
+        "url_template": "https://leakcheck.io/search?q={clean_num}",
+        "notes": "Verificación de filtraciones de datos"
+    },
+    "DeHashed": {
+        "url_template": "https://dehashed.com/search?query={clean_num}",
+        "notes": "Búsqueda en bases de datos filtradas (requiere cuenta)"
+    }
+}
+
+# Patrones de email generados a partir de números
+EMAIL_PATTERNS = [
+    "{number}@gmail.com",
+    "{number}@yahoo.com",
+    "{number}@hotmail.com",
+    "{number}@outlook.com",
+    "{national}@gmail.com",
+    "{last7}@gmail.com",
+    "{last4}@gmail.com",
+    "phone{number}@gmail.com",
+    "num{national}@yahoo.com"
+]
+
+# Rangos de números premium rate por país
+PREMIUM_RATE_RANGES = {
+    "US": {
+        "Premium Rate": ["1900", "1976", "1800", "1888"],
+        "High Cost": ["1900"],
+        "notas": "Números 1-900 muy costosos"
+    },
+    "ES": {
+        "Premium Rate": ["803", "806", "807", "909", "901", "902"],
+        "Servicios Especiales": ["803", "806"],
+        "notas": "803/806/807 son tarificación adicional"
+    },
+    "GB": {
+        "Premium Rate": ["4470", "4471", "4476", "4477", "4478", "4479"],
+        "Service Numbers": ["44800", "44845", "44870"],
+        "notas": "44 70x son números de red personal"
+    },
+    "MX": {
+        "Premium Rate": ["900", "800"],
+        "Lada Costosa": ["900"],
+        "notas": "Números 900 de tarificación especial"
+    }
+}
+
+# Metadatos por país para OSINT avanzado
+COUNTRY_METADATA = {
+    "US": {
+        "network_types": "CDMA/GSM/LTE/5G",
+        "number_portability": True,
+        "carrier_prefixes": {
+            "Verizon": ["201", "202", "203"],
+            "AT&T": ["204", "205", "206"],
+            "T-Mobile": ["207", "208", "209"]
+        },
+        "area_code_database": "https://www.area-codes.com/",
+        "notas": "Alta portabilidad numérica, difícil rastrear operadora original"
+    },
+    "ES": {
+        "network_types": "GSM/LTE/5G",
+        "number_portability": True,
+        "carrier_prefixes": {
+            "Movistar": ["600", "610", "620"],
+            "Vodafone": ["650", "660", "670"],
+            "Orange": ["680", "690"]
+        },
+        "notas": "Los prefijos 600/700 son móviles, 900 son tarificación adicional"
+    },
+    "MX": {
+        "network_types": "GSM/LTE/5G",
+        "number_portability": True,
+        "carrier_prefixes": {
+            "Telcel": ["55", "56", "81"],
+            "Movistar": ["44", "45"],
+            "AT&T": ["48", "49"]
+        },
+        "notas": "LADA requerida para llamadas nacionales"
+    },
+    "GB": {
+        "network_types": "GSM/LTE/5G",
+        "number_portability": True,
+        "carrier_prefixes": {
+            "EE": ["74", "75", "77"],
+            "O2": ["73", "78"],
+            "Vodafone": ["71", "72", "79"]
+        },
+        "notas": "Números 07x son móviles, 0800 son gratuitos"
+    }
+}
+
+# Endpoints de API para verificación (algunos requieren claves)
+API_ENDPOINTS = {
+    "numverify": {
+        "url": "http://apilayer.net/api/validate?access_key={key}&number={number}",
+        "requires_key": True,
+        "notas": "API de validación de números (freemium)"
+    },
+    "neutrinoapi": {
+        "url": "https://neutrinoapi.com/phone-validate?user-id={user}&api-key={key}&number={number}",
+        "requires_key": True,
+        "notas": "API con información detallada"
+    },
+    "twilio_lookup": {
+        "url": "https://lookups.twilio.com/v1/PhoneNumbers/{number}?Type=carrier",
+        "requires_key": True,
+        "notas": "Lookup de Twilio para carrier y tipo"
+    }
+}

@@ -5,16 +5,22 @@ from bs4 import BeautifulSoup
 import random
 import phonenumbers
 from phonenumbers import carrier, geocoder, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
+import json
+import time
+import hashlib
+import base64
 
 import logging
 
 from phone_data import (
     NUMBER_TYPE_MAP, LOCAL_FORMATS_DB, AREA_CODE_RULES, LINE_RULES,
     CARRIERS_DB, SUSPICIOUS_PATTERNS, COUNTRY_SPECIFIC_RISKS,
-    SOCIAL_MEDIA_TEMPLATES, BLACKLIST_TEMPLATES, USER_AGENTS
+    SOCIAL_MEDIA_TEMPLATES, BLACKLIST_TEMPLATES, USER_AGENTS,
+    VOIP_PROVIDERS, BREACH_SOURCES, EMAIL_PATTERNS,
+    PREMIUM_RATE_RANGES, COUNTRY_METADATA, API_ENDPOINTS
 )
-from dp_utils import parallel_check, logger
+from dp_utils import parallel_check, logger, make_request, check_url_status
 
 
 
@@ -351,6 +357,193 @@ class PhoneNumberAnalyzer:
             logger.error(f"Error en check_phone_format_variations para '{self.raw_number}': {e}")
             return {"error": f"Error al generar variaciones de formato: {str(e)}"}
 
+    def check_voip_providers(self) -> Dict[str, Any]:
+        """Identifica si el número pertenece a proveedores VoIP conocidos."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            e164 = phonenumbers.format_number(self.parsed_number, phonenumbers.PhoneNumberFormat.E164)
+            national = self.national_number_str
+            
+            voip_matches = []
+            for provider, patterns in VOIP_PROVIDERS.items():
+                for pattern in patterns.get("number_patterns", []):
+                    if re.match(pattern, national) or re.match(pattern, e164.replace("+", "")):
+                        voip_matches.append({
+                            "proveedor": provider,
+                            "tipo": patterns.get("type", "VoIP"),
+                            "sitio_web": patterns.get("website", "N/A"),
+                            "notas": patterns.get("notes", "")
+                        })
+            
+            return {
+                "es_voip": len(voip_matches) > 0,
+                "proveedores_detectados": voip_matches,
+                "riesgo_voip": "Alto" if len(voip_matches) > 0 else "Bajo",
+                "notas": "Los números VoIP son comúnmente usados para spam/scam debido a su fácil adquisición"
+            }
+        except Exception as e:
+            logger.error(f"Error en check_voip_providers para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
+    def check_breach_databases(self) -> Dict[str, Any]:
+        """Verifica si el número aparece en bases de datos de filtraciones conocidas."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            clean_num = phonenumbers.format_number(self.parsed_number, phonenumbers.PhoneNumberFormat.E164).replace("+", "")
+            
+            breach_results = {
+                "enlaces_verificacion": {},
+                "menciones_en_filtraciones": 0,
+                "bases_consultadas": []
+            }
+            
+            for source_name, source_data in BREACH_SOURCES.items():
+                url = source_data["url_template"].format(clean_num=clean_num)
+                breach_results["enlaces_verificacion"][source_name] = url
+                breach_results["bases_consultadas"].append(source_name)
+            
+            return breach_results
+        except Exception as e:
+            logger.error(f"Error en check_breach_databases para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
+    def check_email_patterns(self) -> Dict[str, List[str]]:
+        """Genera posibles patrones de email asociados al número."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            clean_num = phonenumbers.format_number(self.parsed_number, phonenumbers.PhoneNumberFormat.E164).replace("+", "")
+            national = self.national_number_str
+            
+            possible_emails = []
+            for pattern in EMAIL_PATTERNS:
+                email = pattern.format(
+                    number=clean_num,
+                    national=national,
+                    last7=national[-7:] if len(national) >= 7 else national,
+                    last4=national[-4:] if len(national) >= 4 else national
+                )
+                possible_emails.append(email)
+            
+            return {
+                "patrones_generados": list(set(possible_emails)),
+                "total_patrones": len(possible_emails),
+                "notas": "Estos son patrones probables. Verificar con OSINT de email adicional."
+            }
+        except Exception as e:
+            logger.error(f"Error en check_email_patterns para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
+    def check_premium_rate(self) -> Dict[str, Any]:
+        """Verifica si el número es un número premium rate (tarificación adicional)."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            national = self.national_number_str
+            country = self.country_code.upper()
+            
+            is_premium = False
+            rate_info = {}
+            
+            if country in PREMIUM_RATE_RANGES:
+                for rate_type, ranges in PREMIUM_RATE_RANGES[country].items():
+                    for prefix in ranges:
+                        if national.startswith(prefix):
+                            is_premium = True
+                            rate_info = {
+                                "tipo": rate_type,
+                                "prefijo": prefix,
+                                "pais": country,
+                                "riesgo": "Alto - Números costosos",
+                                "recomendacion": "Evitar llamar, pueden tener costos elevados"
+                            }
+                            break
+            
+            return {
+                "es_premium_rate": is_premium,
+                "informacion_tarifa": rate_info if is_premium else {},
+                "numero_tipo": "Premium Rate" if is_premium else "Estándar"
+            }
+        except Exception as e:
+            logger.error(f"Error en check_premium_rate para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
+    def advanced_google_dorks(self) -> Dict[str, List[str]]:
+        """Genera dorks avanzados de Google para investigación profunda."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            clean_num = phonenumbers.format_number(self.parsed_number, phonenumbers.PhoneNumberFormat.E164).replace("+", "")
+            national = self.national_number_str
+            intl = phonenumbers.format_number(self.parsed_number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+            
+            dorks = {
+                "whatsapp": [
+                    f'"{clean_num}" site:wa.me',
+                    f'"{national}" "WhatsApp" "última vez"'
+                ],
+                "telegram": [
+                    f'"{clean_num}" site:t.me',
+                    f'"{national}" "Telegram" user'
+                ],
+                "foros": [
+                    f'"{clean_num}" "foro" OR "forum" OR "hilo"',
+                    f'"{national}" "spam" OR "estafa" OR "fraude"'
+                ],
+                "redes_sociales": [
+                    f'"{clean_num}" site:facebook.com OR site:instagram.com',
+                    f'"{national}" "perfil" OR "usuario" OR "contacto"'
+                ],
+                "noticias": [
+                    f'"{clean_num}" "noticia" OR "news" OR "prensa"',
+                    f'"{national}" "llamadas" OR "teléfono" OR "denuncia"'
+                ],
+                "laboral": [
+                    f'"{clean_num}" "CV" OR "curriculum" OR "LinkedIn"',
+                    f'"{national}" "contacto" OR "oficina" OR "trabajo"'
+                ]
+            }
+            
+            return dorks
+        except Exception as e:
+            logger.error(f"Error en advanced_google_dorks para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
+    def check_carrier_footprint(self) -> Dict[str, Any]:
+        """Analiza la huella digital de la operadora y su infraestructura."""
+        try:
+            if not self._check_parsed_number():
+                return {"error": "Número no válido o no parseado."}
+            
+            carrier_name = carrier.name_for_number(self.parsed_number, "en") or "Desconocida"
+            
+            footprint = {
+                "operadora": carrier_name,
+                "infraestructura": {},
+                "rangos_asignados": {},
+                "tecnologias": []
+            }
+            
+            if self.country_code.upper() in COUNTRY_METADATA:
+                country_data = COUNTRY_METADATA[self.country_code.upper()]
+                footprint["infraestructura"] = {
+                    "prefijos_operadora": country_data.get("carrier_prefixes", {}).get(carrier_name, []),
+                    "tipo_red": country_data.get("network_types", "Mixto"),
+                    "portabilidad": country_data.get("number_portability", False)
+                }
+            
+            return footprint
+        except Exception as e:
+            logger.error(f"Error en check_carrier_footprint para '{self.raw_number}': {e}")
+            return {"error": str(e)}
+
     def analyze_all(self) -> Dict[str, Any]:
         """
         Ejecuta todas las verificaciones de análisis en paralelo.
@@ -370,7 +563,13 @@ class PhoneNumberAnalyzer:
             "Información_de_operadora": self.check_carrier_info,
             "Reputación_del_número": self.check_number_reputation,
             "Listas_negras": self.check_phone_blacklists,
-            "Variaciones_de_formato": self.check_phone_format_variations
+            "Variaciones_de_formato": self.check_phone_format_variations,
+            "Proveedores_VoIP": self.check_voip_providers,
+            "Bases_de_filtraciones": self.check_breach_databases,
+            "Patrones_de_email": self.check_email_patterns,
+            "Verificación_tarifa_premium": self.check_premium_rate,
+            "Google_Dorks_avanzados": self.advanced_google_dorks,
+            "Huella_de_operadora": self.check_carrier_footprint
         }
         
         # parallel_check es una función de utilidad, no un método de la clase

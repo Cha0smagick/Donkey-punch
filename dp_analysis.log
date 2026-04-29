@@ -9,3 +9,10 @@
 2026-04-29 11:26:39,403 - dp_utils - ERROR - Error en la ejecución de la tarea 'Búsqueda_en_Google' para el número '+573002712532': PhoneNumberAnalyzer.check_google_search() takes 1 positional argument but 2 were given
 2026-04-29 11:26:39,403 - dp_utils - INFO - Guardando resultados para +573002712532 en reporte_573002712532_20260429_112639.txt y reporte_573002712532_20260429_112639.json
 2026-04-29 11:26:39,413 - dp_utils - INFO - Análisis completado para +573002712532. Reportes generados: reporte_573002712532_20260429_112639.txt, reporte_573002712532_20260429_112639.json
+2026-04-29 11:29:36,691 - dp_utils - INFO - Iniciando análisis para el número: +573002712532
+2026-04-29 11:29:44,732 - dp_utils - INFO - Guardando resultados para +573002712532 en reporte_573002712532_20260429_112944.txt y reporte_573002712532_20260429_112944.json
+2026-04-29 11:29:44,742 - dp_utils - INFO - Análisis completado para +573002712532. Reportes generados: reporte_573002712532_20260429_112944.txt, reporte_573002712532_20260429_112944.json
+2026-04-29 11:59:20,571 - dp_utils - INFO - Iniciando análisis para el número: +573002712532
+2026-04-29 11:59:34,955 - dp_utils - INFO - Guardando resultados para +573002712532 en reporte_573002712532_20260429_115934.txt y reporte_573002712532_20260429_115934.json
+2026-04-29 11:59:34,957 - dp_utils - INFO - Reporte HTML guardado en reporte_573002712532_20260429_115934.html
+2026-04-29 11:59:34,965 - dp_utils - INFO - Análisis completado para +573002712532. Reportes generados: reporte_573002712532_20260429_115934.txt, reporte_573002712532_20260429_115934.json, reporte_573002712532_20260429_115934.html
