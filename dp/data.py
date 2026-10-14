@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-phone_data.py - Bases de datos estaticas v2 del analizador OSINT.
+dp/data.py - Bases de datos estaticas v2 del analizador OSINT.
 
 Cambios v2 (auditoria):
 - ELIMINADO LOCAL_FORMATS_DB: las lambdas perdian digitos (FR/AR). El formato
@@ -8,7 +8,7 @@ Cambios v2 (auditoria):
 - ELIMINADOS los "number_patterns" regex de VoIP: eran irreparables
   (^44[0-9]{10}$ matcheaba TODO numero UK; ^1[0-9]{9}$ nunca matcheaba un US
   de 11 digitos). La deteccion VoIP/premium/toll-free usa
-  phonenumbers.number_type() (verdad de terreno) en phone_analyzer.py.
+  phonenumbers.number_type() (verdad de terreno) en dp/analyzer.py.
   Aqui queda VOIP_PROVIDER_INFO solo como contexto (sitio web, indicadores).
 - PREMIUM_RATE_INFO / TOLL_FREE_INFO: prefijos comparables contra el numero
   NACIONAL sin prefijo de pais (los antiguos "1900"/"4470" nunca matcheaban).

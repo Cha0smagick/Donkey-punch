@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-dp_utils.py - Utilidades v2: logging UTF-8, HTTP con throttle por host,
+dp/utils.py - Utilidades v2: logging UTF-8, HTTP con throttle por host,
 paralelismo sin sumisiones espaciadas y exportes JSON/TXT/CSV/HTML.
 
 Cambios v2 (auditoría):
@@ -109,7 +109,7 @@ def make_request(url: str, method: str = "GET", headers: Optional[Dict] = None,
     - Backoff exponencial en 429/503.
     - auth: tupla (usuario, contraseña) para HTTP Basic (p. ej. Twilio).
     """
-    from phone_data import USER_AGENTS
+    from .data import USER_AGENTS
 
     request_headers = dict(headers) if headers else {}
     if not any(k.lower() == "user-agent" for k in request_headers):

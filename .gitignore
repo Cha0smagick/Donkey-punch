@@ -1,5 +1,17 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Entorno local
+.env
+
+# Artefactos de ejecución
 dp_cache/
 dp_analysis.log
 reports/
@@ -7,3 +19,4 @@ reporte_*.json
 reporte_*.txt
 reporte_*.html
 batch_report_*
+reporte_lote_*

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-dp_search.py - Motor de busqueda web multi-motor (sin claves de API).
+dp/search.py - Motor de busqueda web multi-motor (sin claves de API).
 
 Sustituye el scraping directo de Google, que en la practica devolvia
 timeouts y CAPTCHAS (ver dp_analysis.log), por una cadena de motores
@@ -37,7 +37,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup
 
-from phone_data import USER_AGENTS
+from .data import USER_AGENTS
 
 logger = logging.getLogger("dp_search")
 

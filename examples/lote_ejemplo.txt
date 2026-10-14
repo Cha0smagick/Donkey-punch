@@ -1,0 +1,10 @@
+# Ejemplo de fichero de lote para dp.py:  un número por línea.
+# Las líneas que empiezan por # y las vacías se ignoran.
+#
+# Uso:  python dp.py -b examples/lote_ejemplo.txt
+#
+# Formato internacional recomendado (con '+'):
++34612345678
++447911123456
++18005551234
++34806123456

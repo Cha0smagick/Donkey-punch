@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-phone_analyzer.py - Núcleo del analizador OSINT (v2, 17 módulos + resumen).
+dp/analyzer.py - Núcleo del analizador OSINT (v2, 17 módulos + resumen).
 
 Cambios v2 (auditoría):
 - Detección VoIP/premium/toll-free por phonenumbers.number_type() (verdad de
@@ -34,15 +34,15 @@ import phonenumbers
 from bs4 import BeautifulSoup
 from phonenumbers import carrier, geocoder, timezone
 
-from phone_data import (
+from .data import (
     NUMBER_TYPE_MAP, AREA_CODE_RULES, LINE_RULES, CARRIERS_DB,
     SUSPICIOUS_PATTERNS, COUNTRY_SPECIFIC_RISKS, SOCIAL_MEDIA_TEMPLATES,
     BLACKLIST_TEMPLATES, VOIP_PROVIDER_INFO, BREACH_SOURCES, EMAIL_PATTERNS,
     PREMIUM_RATE_INFO, TOLL_FREE_INFO, TELLOWS_TLDS,
     PEOPLE_SEARCH_TEMPLATES, DORK_TEMPLATES, COUNTRY_METADATA, API_ENDPOINTS,
 )
-from dp_utils import parallel_check, logger, make_request
-from dp_search import SearchClient
+from .utils import parallel_check, logger, make_request
+from .search import SearchClient
 
 _EMAIL_RE = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
 _IP_RE = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
